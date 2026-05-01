@@ -1,0 +1,13 @@
+/* App.css — OCMS
+   App-level layout overrides (Vite boilerplate removed).
+   All design tokens and component styles live in index.css.
+*/
+
+/* Ensure full-width layout for the app */
+#root {
+  max-width: 100%;
+  width: 100%;
+  text-align: left;
+  margin: 0;
+  border: none;
+}
