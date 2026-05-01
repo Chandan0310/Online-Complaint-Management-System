@@ -1,3 +1,11 @@
+/**
+ * @file App.jsx
+ * @description Root application component that defines the client-side
+ *              routing table for the OCMS single-page application.  Each
+ *              route is wrapped in {@link ProtectedRoute} to enforce
+ *              authentication and role-based access control.
+ */
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
@@ -8,29 +16,38 @@ import ManagerDashboard from './components/ManagerDashboard';
 import ManagerComplaintDetail from './components/ManagerComplaintDetail';
 import AdminDashboard from './components/AdminDashboard';
 import StudentProfile from './components/StudentProfile';
-import ProtectedRoute from './components/ProtectedRoute'; // <-- IMPORT THE BOUNCER!
+import ProtectedRoute from './components/ProtectedRoute';
 
+/**
+ * App component — sets up React Router with public routes (login, register)
+ * and protected routes grouped by role (Student, Manager, Admin).
+ *
+ * @returns {JSX.Element} The root application element.
+ */
 function App() {
   return (
     <Router>
       <Routes>
+        {/* Default redirect */}
         <Route path="/" element={<Navigate to="/login" />} />
+
+        {/* Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* --- STUDENT ROUTES --- */}
+        {/* Student routes */}
         <Route path="/dashboard" element={
           <ProtectedRoute element={<StudentDashboard />} allowedRoles={['STUDENT']} />
         } />
         <Route path="/profile" element={
           <ProtectedRoute element={<StudentProfile />} allowedRoles={['STUDENT']} />
         } />
-        {/* We let Admins view student complaints too, so they are in the allowed list! */}
+        {/* Complaint detail — accessible by the owning student and admins */}
         <Route path="/complaint/:id" element={
           <ProtectedRoute element={<ComplaintDetail />} allowedRoles={['STUDENT', 'ADMIN']} />
         } />
-        
-        {/* --- MANAGER ROUTES --- */}
+
+        {/* Manager routes */}
         <Route path="/manager-dashboard" element={
           <ProtectedRoute element={<ManagerDashboard />} allowedRoles={['MANAGER']} />
         } />
@@ -38,11 +55,10 @@ function App() {
           <ProtectedRoute element={<ManagerComplaintDetail />} allowedRoles={['MANAGER']} />
         } />
 
-        {/* --- ADMIN ROUTES --- */}
+        {/* Admin routes */}
         <Route path="/admin-dashboard" element={
           <ProtectedRoute element={<AdminDashboard />} allowedRoles={['ADMIN']} />
         } />
-
       </Routes>
     </Router>
   );

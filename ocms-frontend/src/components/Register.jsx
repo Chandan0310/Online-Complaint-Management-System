@@ -1,29 +1,68 @@
+/**
+ * @file Register.jsx
+ * @description Student self-registration page for the Online Complaint
+ *              Management System (OCMS).  Collects College ID, full name,
+ *              university email, phone, and password with thorough regex
+ *              validation before submitting to the backend.
+ */
+
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import {
+  COLLEGE_ID_PATTERN, COLLEGE_ID_MSG,
+  NAME_PATTERN, NAME_MSG,
+  EMAIL_PATTERN, EMAIL_MSG,
+  PHONE_PATTERN, PHONE_MSG,
+  PASSWORD_PATTERN, PASSWORD_MSG,
+} from '../utils/validationPatterns';
 
+/**
+ * Register component — renders the student sign-up form with client-side
+ * regex validation on every field and redirects to login on success.
+ *
+ * @returns {JSX.Element} The registration page layout.
+ */
 const Register = () => {
+  /** Form field values */
   const [formData, setFormData] = useState({
     userId: '',
     name: '',
     email: '',
     phone: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
+
+  /** Feedback message shown after form submission */
   const [message, setMessage] = useState('');
+  /** Whether the current message is an error (true) or success (false) */
   const [isError, setIsError] = useState(false);
+  /** Disables the submit button while the API call is in-flight */
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
+  /**
+   * Generic change handler — updates the matching key in formData.
+   * @param {React.ChangeEvent<HTMLInputElement>} e
+   */
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  /**
+   * Handles form submission — validates passwords match, then POSTs the
+   * payload to `/api/auth/register`.  On success the form resets and the
+   * user is redirected to the login page after 2 seconds.
+   *
+   * @param {React.FormEvent<HTMLFormElement>} e
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
 
+    /* Confirm password match before hitting the network */
     if (formData.password !== formData.confirmPassword) {
       setMessage('Passwords do not match. Please try again.');
       setIsError(true);
@@ -76,6 +115,7 @@ const Register = () => {
           <h2>Create Account</h2>
           <p className="subtitle">Fill in your details to get started with OCMS.</p>
 
+          {/* Feedback alert */}
           {message && (
             <div className={`alert ${isError ? 'alert-danger' : 'alert-success'} mb-4`} role="alert">
               <i className={`bi ${isError ? 'bi-exclamation-circle' : 'bi-check-circle'} me-2`}></i>
@@ -84,42 +124,49 @@ const Register = () => {
           )}
 
           <form onSubmit={handleSubmit} className="form-modern">
+            {/* Name & College ID — side-by-side */}
             <div className="row g-3 mb-1">
               <div className="col-sm-6">
                 <label htmlFor="name">Full Name</label>
                 <input id="name" type="text" name="name" className="form-control"
                   placeholder="Your full name" required
+                  pattern={NAME_PATTERN} title={NAME_MSG}
                   value={formData.name} onChange={handleChange} />
               </div>
               <div className="col-sm-6">
                 <label htmlFor="userId">College ID</label>
                 <input id="userId" type="text" name="userId" className="form-control"
-                  placeholder="e.g., 23mcce11" required
+                  placeholder="e.g. 23mcce11" required
+                  pattern={COLLEGE_ID_PATTERN} title={COLLEGE_ID_MSG}
                   value={formData.userId} onChange={handleChange} />
               </div>
             </div>
 
+            {/* Email */}
             <div className="mb-3 mt-2">
               <label htmlFor="email">University Email</label>
               <input id="email" type="email" name="email" className="form-control"
                 placeholder="you@uohyd.ac.in" required
+                pattern={EMAIL_PATTERN} title={EMAIL_MSG}
                 value={formData.email} onChange={handleChange} />
             </div>
 
+            {/* Phone */}
             <div className="mb-3">
               <label htmlFor="phone">Phone Number</label>
               <input id="phone" type="tel" name="phone" className="form-control"
                 placeholder="10-digit mobile number" required
-                pattern="[6-9]\d{9}"
-                title="Enter a valid 10-digit Indian mobile number"
+                pattern={PHONE_PATTERN} title={PHONE_MSG}
                 value={formData.phone} onChange={handleChange} />
             </div>
 
+            {/* Password & Confirm Password */}
             <div className="row g-3 mb-4">
               <div className="col-sm-6">
                 <label htmlFor="password">Password</label>
                 <input id="password" type="password" name="password" className="form-control"
-                  placeholder="Create a password" required minLength={6}
+                  placeholder="Create a password" required
+                  pattern={PASSWORD_PATTERN} title={PASSWORD_MSG}
                   value={formData.password} onChange={handleChange} />
               </div>
               <div className="col-sm-6">
@@ -130,6 +177,7 @@ const Register = () => {
               </div>
             </div>
 
+            {/* Submit */}
             <button
               type="submit"
               className="btn-grad w-100 justify-content-center"

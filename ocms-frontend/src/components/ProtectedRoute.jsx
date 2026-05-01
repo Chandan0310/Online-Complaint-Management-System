@@ -1,24 +1,40 @@
+/**
+ * @file ProtectedRoute.jsx
+ * @description Route guard component that checks authentication state and
+ *              enforces role-based access control.  Unauthenticated users
+ *              are redirected to `/login`.  Authenticated users who lack
+ *              the required role are redirected to their own dashboard.
+ */
+
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
+/**
+ * ProtectedRoute component — wraps a page element and gates access based
+ * on the presence of a JWT token and the user's role.
+ *
+ * @param {Object}   props
+ * @param {JSX.Element} props.element      - The page component to render when access is granted.
+ * @param {string[]}    props.allowedRoles - Roles permitted to view this route (e.g. ['STUDENT', 'ADMIN']).
+ * @returns {JSX.Element} Either the protected page or a redirect.
+ */
 const ProtectedRoute = ({ element, allowedRoles }) => {
   const token = localStorage.getItem('token');
   const role = localStorage.getItem('role');
 
-  // 1. If they aren't logged in at all, kick to login
+  /* No token → redirect to login */
   if (!token) {
     return <Navigate to="/login" />;
   }
 
-  // 2. If this route requires specific roles, and the user doesn't have it...
+  /* Token present but role not in the allowed list → redirect to own dashboard */
   if (allowedRoles && !allowedRoles.includes(role)) {
-    // Kick them back to their specific homepage!
     if (role === 'ADMIN') return <Navigate to="/admin-dashboard" />;
     if (role === 'MANAGER') return <Navigate to="/manager-dashboard" />;
     return <Navigate to="/dashboard" />;
   }
 
-  // 3. If everything is fine, let them see the page
+  /* Access granted */
   return element;
 };
 

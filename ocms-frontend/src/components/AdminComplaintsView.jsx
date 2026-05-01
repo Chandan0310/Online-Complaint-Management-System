@@ -1,23 +1,21 @@
+/**
+ * @file AdminComplaintsView.jsx
+ * @description Admin sub-component that displays a filterable, searchable
+ *              table of all complaints across the university.  Supports
+ *              status filter, building filter, and complaint ID search.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
+import { getStatusBadge } from '../utils/statusBadge';
 
-const getStatusBadge = (status) => {
-  const map = {
-    PENDING:     { cls: 'badge-status badge-pending',  icon: 'bi-hourglass-split', label: 'Pending' },
-    ACCEPTED:    { cls: 'badge-status badge-accepted', icon: 'bi-check-circle',    label: 'Accepted' },
-    IN_PROGRESS: { cls: 'badge-status badge-progress', icon: 'bi-gear',            label: 'In Progress' },
-    RESOLVED:    { cls: 'badge-status badge-resolved', icon: 'bi-check-circle-fill', label: 'Resolved' },
-    REJECTED:    { cls: 'badge-status badge-rejected', icon: 'bi-x-circle',        label: 'Rejected' },
-  };
-  const s = map[status] || { cls: 'badge-status', icon: 'bi-circle', label: status };
-  return (
-    <span className={s.cls}>
-      <i className={`bi ${s.icon}`}></i> {s.label}
-    </span>
-  );
-};
-
+/**
+ * AdminComplaintsView component — fetches every complaint and renders a
+ * sortable, filterable, searchable table with clickable rows.
+ *
+ * @returns {JSX.Element} University-wide complaints card.
+ */
 const AdminComplaintsView = () => {
   const navigate = useNavigate();
   const [complaints, setComplaints] = useState([]);
@@ -25,13 +23,15 @@ const AdminComplaintsView = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
+  /** Search input for complaint tracking ID */
+  const [searchId, setSearchId] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [compRes, locRes] = await Promise.all([
           api.get('/admin/complaints'),
-          api.get('/locations/all')
+          api.get('/locations/all-admin'),
         ]);
         setComplaints(compRes.data);
         setLocations(locRes.data);
@@ -44,30 +44,52 @@ const AdminComplaintsView = () => {
     fetchData();
   }, []);
 
+  /** Apply all filters: status + building + ID search */
   const filtered = complaints.filter((c) => {
     const matchStatus = !statusFilter || c.status === statusFilter;
     const matchLoc = !locationFilter || c.location?.locationId.toString() === locationFilter;
-    return matchStatus && matchLoc;
+    const matchSearch = !searchId || c.complaintId.toLowerCase().includes(searchId.toLowerCase());
+    return matchStatus && matchLoc && matchSearch;
   });
+
+  const hasActiveFilters = statusFilter || locationFilter || searchId;
 
   return (
     <div className="card-modern">
       <div className="card-modern-header gradient">
         <h5><i className="bi bi-globe-americas"></i> University-Wide Complaints</h5>
         <span style={{
-          background: 'rgba(255,255,255,0.22)',
-          color: '#fff',
-          padding: '0.2rem 0.65rem',
-          borderRadius: 20,
-          fontSize: '0.8rem',
-          fontWeight: 600
+          background: 'rgba(255,255,255,0.22)', color: '#fff',
+          padding: '0.2rem 0.65rem', borderRadius: 20,
+          fontSize: '0.8rem', fontWeight: 600,
         }}>
           {filtered.length} results
         </span>
       </div>
 
-      {/* Filter Bar */}
-      <div className="filter-bar">
+      {/* Filter + Search bar */}
+      <div className="filter-bar" style={{ flexWrap: 'wrap' }}>
+        {/* Search by ID */}
+        <i className="bi bi-search" style={{ color: 'var(--clr-text-muted)' }}></i>
+        <input
+          type="text"
+          placeholder="Search by Complaint ID…"
+          value={searchId}
+          onChange={(e) => setSearchId(e.target.value)}
+          style={{
+            border: '1.5px solid var(--clr-border)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '0.35rem 0.75rem',
+            fontSize: '0.82rem',
+            color: 'var(--clr-text)',
+            background: '#fff',
+            fontFamily: 'var(--font-base)',
+            minWidth: '180px',
+          }}
+        />
+        <span style={{ color: 'var(--clr-border)' }}>|</span>
+
+        {/* Status filter */}
         <i className="bi bi-funnel" style={{ color: 'var(--clr-text-muted)' }}></i>
         <label>Status:</label>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -79,6 +101,8 @@ const AdminComplaintsView = () => {
           <option value="REJECTED">Rejected</option>
         </select>
         <span style={{ color: 'var(--clr-border)' }}>|</span>
+
+        {/* Building filter */}
         <label>Building:</label>
         <select value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
           <option value="">All Buildings</option>
@@ -86,28 +110,23 @@ const AdminComplaintsView = () => {
             <option key={loc.locationId} value={loc.locationId}>{loc.buildingName}</option>
           ))}
         </select>
-        {(statusFilter || locationFilter) && (
+
+        {/* Clear all filters */}
+        {hasActiveFilters && (
           <button
-            onClick={() => { setStatusFilter(''); setLocationFilter(''); }}
+            onClick={() => { setStatusFilter(''); setLocationFilter(''); setSearchId(''); }}
             style={{
-              marginLeft: 'auto',
-              background: 'none',
-              border: 'none',
-              color: 'var(--clr-rejected)',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.25rem'
+              marginLeft: 'auto', background: 'none', border: 'none',
+              color: 'var(--clr-rejected)', fontSize: '0.8rem', fontWeight: 600,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem',
             }}
           >
-            <i className="bi bi-x-circle"></i> Clear filters
+            <i className="bi bi-x-circle"></i> Clear all
           </button>
         )}
       </div>
 
-      {/* Table */}
+      {/* Content */}
       {loading ? (
         <div style={{ padding: '3rem', textAlign: 'center' }}>
           <div className="spinner-border" role="status"><span className="visually-hidden">Loading…</span></div>

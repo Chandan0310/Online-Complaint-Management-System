@@ -1,29 +1,30 @@
+/**
+ * @file ComplaintDetail.jsx
+ * @description Read-only detail view for a single complaint.  Accessible to
+ *              the student who submitted the complaint and to admins.
+ *              Includes a visual status stepper and displays submitted /
+ *              resolved evidence images.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
+import { getStatusBadge } from '../utils/statusBadge';
 
-// --- Re-usable helper ---
-const getStatusBadge = (status) => {
-  const map = {
-    PENDING:     { cls: 'badge-status badge-pending',  icon: 'bi-hourglass-split', label: 'Pending' },
-    ACCEPTED:    { cls: 'badge-status badge-accepted', icon: 'bi-check-circle',    label: 'Accepted' },
-    IN_PROGRESS: { cls: 'badge-status badge-progress', icon: 'bi-gear',            label: 'In Progress' },
-    RESOLVED:    { cls: 'badge-status badge-resolved', icon: 'bi-check-circle-fill', label: 'Resolved' },
-    REJECTED:    { cls: 'badge-status badge-rejected', icon: 'bi-x-circle',        label: 'Rejected' },
-  };
-  const s = map[status] || { cls: 'badge-status', icon: 'bi-circle', label: status };
-  return (
-    <span className={s.cls}>
-      <i className={`bi ${s.icon}`}></i> {s.label}
-    </span>
-  );
-};
-
-// --- Visual Stepper ---
+/**
+ * Visual stepper that renders the complaint lifecycle as a horizontal
+ * progress tracker.  Handles both the normal flow
+ * (PENDING → ACCEPTED → IN_PROGRESS → RESOLVED) and the rejection path.
+ *
+ * @param {Object}  props
+ * @param {string}  props.status - Current complaint status.
+ * @returns {JSX.Element} A horizontal stepper visualisation.
+ */
 const StatusStepper = ({ status }) => {
   const stages = ['PENDING', 'ACCEPTED', 'IN_PROGRESS', 'RESOLVED'];
   const labels = ['Pending', 'Accepted', 'In Progress', 'Resolved'];
 
+  /* Rejection is a terminal branch — show a two-step path */
   if (status === 'REJECTED') {
     return (
       <div className="stepper">
@@ -77,14 +78,24 @@ const StatusStepper = ({ status }) => {
   );
 };
 
-// --- Main Component ---
+/**
+ * ComplaintDetail component — fetches and displays all information about a
+ * single complaint identified by the `:id` URL parameter.
+ *
+ * @returns {JSX.Element} Complaint detail page layout.
+ */
 const ComplaintDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  /** Fetched complaint object */
   const [complaint, setComplaint] = useState(null);
+  /** Whether the API call is still in-flight */
   const [loading, setLoading] = useState(true);
+  /** Error message if the fetch fails */
   const [error, setError] = useState('');
 
+  /* Fetch complaint by ID on mount / when ID changes */
   useEffect(() => {
     const fetchDetails = async () => {
       try {
@@ -99,6 +110,7 @@ const ComplaintDetail = () => {
     fetchDetails();
   }, [id]);
 
+  /* Loading spinner */
   if (loading) return (
     <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem' }}>
       <div className="spinner-border" role="status"><span className="visually-hidden">Loading…</span></div>
@@ -106,6 +118,7 @@ const ComplaintDetail = () => {
     </div>
   );
 
+  /* Error state */
   if (error) return (
     <div className="page-wrap">
       <div className="alert alert-danger"><i className="bi bi-exclamation-circle me-2"></i>{error}</div>
@@ -134,14 +147,14 @@ const ComplaintDetail = () => {
             <h5><i className="bi bi-file-earmark-text"></i> Complaint Details</h5>
           </div>
 
-          {/* Stepper */}
+          {/* Status stepper */}
           <div style={{ borderBottom: '1px solid var(--clr-border)', background: '#fafbff', padding: '0 1rem' }}>
             <StatusStepper status={complaint.status} />
           </div>
 
           <div className="card-modern-body">
             <div className="row g-4">
-              {/* Left: Info */}
+              {/* Left: textual details */}
               <div className="col-md-7">
                 <h4 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>{complaint.title}</h4>
                 <p style={{ color: 'var(--clr-text-muted)', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
@@ -160,12 +173,12 @@ const ComplaintDetail = () => {
                   fontSize: '0.9rem',
                   color: 'var(--clr-text-2)',
                   lineHeight: 1.7,
-                  minHeight: '100px'
+                  minHeight: '100px',
                 }}>
                   {complaint.description}
                 </div>
 
-                {/* Manager Remarks */}
+                {/* Manager remarks (visible for resolved or rejected complaints) */}
                 {(complaint.status === 'RESOLVED' || complaint.status === 'REJECTED') && (
                   <div className={`alert ${complaint.status === 'RESOLVED' ? 'alert-success' : 'alert-danger'} mt-4`}>
                     <strong><i className={`bi ${complaint.status === 'RESOLVED' ? 'bi-check-circle' : 'bi-x-circle'} me-2`}></i>Manager's Remarks</strong>
@@ -174,7 +187,7 @@ const ComplaintDetail = () => {
                 )}
               </div>
 
-              {/* Right: Images */}
+              {/* Right: evidence images */}
               <div className="col-md-5">
                 <div className="section-heading">Submitted Evidence</div>
                 {complaint.submittedImagePath ? (
@@ -182,7 +195,7 @@ const ComplaintDetail = () => {
                     border: '1px solid var(--clr-border)',
                     borderRadius: 'var(--radius-md)',
                     overflow: 'hidden',
-                    background: '#f8fafc'
+                    background: '#f8fafc',
                   }}>
                     <img
                       src={`http://localhost:8080/uploads/${complaint.submittedImagePath}`}
@@ -196,13 +209,14 @@ const ComplaintDetail = () => {
                     borderRadius: 'var(--radius-md)',
                     padding: '2.5rem',
                     textAlign: 'center',
-                    color: 'var(--clr-text-muted)'
+                    color: 'var(--clr-text-muted)',
                   }}>
                     <i className="bi bi-image" style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}></i>
                     No photo attached
                   </div>
                 )}
 
+                {/* Resolution proof image */}
                 {complaint.resolvedImagePath && (
                   <>
                     <div className="section-heading mt-4">Resolution Proof</div>
@@ -210,7 +224,7 @@ const ComplaintDetail = () => {
                       border: '1px solid var(--clr-resolved)',
                       borderRadius: 'var(--radius-md)',
                       overflow: 'hidden',
-                      background: '#f0fdf4'
+                      background: '#f0fdf4',
                     }}>
                       <img
                         src={`http://localhost:8080/uploads/${complaint.resolvedImagePath}`}

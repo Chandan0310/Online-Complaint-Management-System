@@ -1,32 +1,41 @@
+/**
+ * @file ManagerComplaintDetail.jsx
+ * @description Manager view for a single complaint.  Provides action buttons
+ *              whose availability depends on the current status:
+ *              PENDING → Accept / Reject, ACCEPTED → Start Work,
+ *              IN_PROGRESS → Mark Resolved (with proof upload).
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
+import { getStatusBadge } from '../utils/statusBadge';
 
-const getStatusBadge = (status) => {
-  const map = {
-    PENDING:     { cls: 'badge-status badge-pending',  icon: 'bi-hourglass-split', label: 'Pending' },
-    ACCEPTED:    { cls: 'badge-status badge-accepted', icon: 'bi-check-circle',    label: 'Accepted' },
-    IN_PROGRESS: { cls: 'badge-status badge-progress', icon: 'bi-gear',            label: 'In Progress' },
-    RESOLVED:    { cls: 'badge-status badge-resolved', icon: 'bi-check-circle-fill', label: 'Resolved' },
-    REJECTED:    { cls: 'badge-status badge-rejected', icon: 'bi-x-circle',        label: 'Rejected' },
-  };
-  const s = map[status] || { cls: 'badge-status', icon: 'bi-circle', label: status };
-  return (
-    <span className={s.cls}>
-      <i className={`bi ${s.icon}`}></i> {s.label}
-    </span>
-  );
-};
-
+/**
+ * ManagerComplaintDetail component — fetches a complaint by `:id` and shows
+ * student information, complaint content, and context-sensitive action
+ * controls for the assigned manager.
+ *
+ * @returns {JSX.Element} Manager complaint management page.
+ */
 const ManagerComplaintDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  /** Fetched complaint object */
   const [complaint, setComplaint] = useState(null);
+  /** Whether the initial fetch is still in-flight */
   const [loading, setLoading] = useState(true);
+  /** Manager's textual remarks */
   const [remarks, setRemarks] = useState('');
+  /** Resolution proof image file */
   const [resolvedImage, setResolvedImage] = useState(null);
+  /** Disables action buttons while an update is being processed */
   const [actionLoading, setActionLoading] = useState(false);
 
+  /**
+   * Fetches the complaint details from the backend.
+   */
   const fetchDetails = async () => {
     try {
       const response = await api.get(`/complaints/${id}`);
@@ -38,8 +47,15 @@ const ManagerComplaintDetail = () => {
     }
   };
 
+  /* Fetch on mount and whenever ID changes */
   useEffect(() => { fetchDetails(); }, [id]);
 
+  /**
+   * Sends a status-update request for the current complaint.
+   * Includes optional remarks and a resolution image.
+   *
+   * @param {string} newStatus - The new status to set (ACCEPTED | REJECTED | IN_PROGRESS | RESOLVED).
+   */
   const handleUpdateStatus = async (newStatus) => {
     if (!window.confirm(`Are you sure you want to mark this complaint as "${newStatus.replace('_', ' ')}"?`)) return;
 
@@ -51,7 +67,7 @@ const ManagerComplaintDetail = () => {
 
     try {
       await api.put(`/complaints/${id}/update`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       fetchDetails();
       setRemarks('');
@@ -63,6 +79,7 @@ const ManagerComplaintDetail = () => {
     }
   };
 
+  /* Loading spinner */
   if (loading) return (
     <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div className="spinner-border" role="status"><span className="visually-hidden">Loading…</span></div>
@@ -73,7 +90,7 @@ const ManagerComplaintDetail = () => {
 
   return (
     <div>
-      {/* Top Bar */}
+      {/* Top bar */}
       <div className="ocms-topbar">
         <button className="btn-outline-modern" onClick={() => navigate('/manager-dashboard')}>
           <i className="bi bi-arrow-left"></i> Dashboard
@@ -92,9 +109,9 @@ const ManagerComplaintDetail = () => {
 
           <div className="card-modern-body">
             <div className="row g-4">
-              {/* LEFT: Student Info + Complaint */}
+              {/* ---- Left column: Student info & complaint details ---- */}
               <div className="col-md-7">
-                {/* Student Info */}
+                {/* Student info banner */}
                 <div className="section-heading"><i className="bi bi-person"></i> Student Information</div>
                 <div style={{
                   background: 'var(--clr-primary-light)',
@@ -103,7 +120,7 @@ const ManagerComplaintDetail = () => {
                   marginBottom: '1.5rem',
                   display: 'flex',
                   gap: '2rem',
-                  flexWrap: 'wrap'
+                  flexWrap: 'wrap',
                 }}>
                   <div className="info-row" style={{ margin: 0 }}>
                     <label>Name</label>
@@ -119,7 +136,7 @@ const ManagerComplaintDetail = () => {
                   </div>
                 </div>
 
-                {/* Complaint Details */}
+                {/* Complaint content */}
                 <div className="section-heading"><i className="bi bi-file-text"></i> Complaint Details</div>
                 <h5 style={{ marginBottom: '0.35rem' }}>{complaint.title}</h5>
                 <p style={{ color: 'var(--clr-text-muted)', fontSize: '0.875rem', marginBottom: '1rem' }}>
@@ -136,11 +153,12 @@ const ManagerComplaintDetail = () => {
                   fontSize: '0.9rem',
                   lineHeight: 1.7,
                   color: 'var(--clr-text-2)',
-                  marginBottom: '1.25rem'
+                  marginBottom: '1.25rem',
                 }}>
                   {complaint.description}
                 </div>
 
+                {/* Submitted evidence image */}
                 {complaint.submittedImagePath && (
                   <div style={{ border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
                     <img
@@ -152,7 +170,7 @@ const ManagerComplaintDetail = () => {
                 )}
               </div>
 
-              {/* RIGHT: Actions */}
+              {/* ---- Right column: Manager actions ---- */}
               <div className="col-md-5">
                 <div className="section-heading"><i className="bi bi-sliders"></i> Manager Actions</div>
 
@@ -203,7 +221,7 @@ const ManagerComplaintDetail = () => {
                       padding: '1rem 1.25rem',
                       marginBottom: '1rem',
                       fontSize: '0.875rem',
-                      color: '#1e40af'
+                      color: '#1e40af',
                     }}>
                       <i className="bi bi-check-circle me-2"></i>
                       Complaint accepted. Click below to start work.
@@ -229,7 +247,7 @@ const ManagerComplaintDetail = () => {
                       padding: '0.85rem 1.1rem',
                       marginBottom: '1.25rem',
                       fontSize: '0.875rem',
-                      color: '#065f46'
+                      color: '#065f46',
                     }}>
                       <i className="bi bi-gear-fill me-2"></i>
                       Work is in progress. Upload proof and remarks to resolve.
@@ -266,7 +284,7 @@ const ManagerComplaintDetail = () => {
                   </div>
                 )}
 
-                {/* Closed */}
+                {/* Closed (Resolved / Rejected) */}
                 {(complaint.status === 'RESOLVED' || complaint.status === 'REJECTED') && (
                   <div className={`alert ${complaint.status === 'RESOLVED' ? 'alert-success' : 'alert-danger'}`}>
                     <strong>

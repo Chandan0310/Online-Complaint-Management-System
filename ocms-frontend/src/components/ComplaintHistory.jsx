@@ -1,34 +1,37 @@
+/**
+ * @file ComplaintHistory.jsx
+ * @description Student sub-component that lists all complaints the logged-in
+ *              student has submitted, sorted newest-first.  Rows are clickable
+ *              and navigate to the detailed complaint view.
+ *              Rendered inside {@link StudentDashboard}.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
+import { getStatusBadge } from '../utils/statusBadge';
 
-const getStatusBadge = (status) => {
-  const map = {
-    PENDING:     { cls: 'badge-status badge-pending',  icon: 'bi-hourglass-split', label: 'Pending' },
-    ACCEPTED:    { cls: 'badge-status badge-accepted', icon: 'bi-check-circle',    label: 'Accepted' },
-    IN_PROGRESS: { cls: 'badge-status badge-progress', icon: 'bi-gear',            label: 'In Progress' },
-    RESOLVED:    { cls: 'badge-status badge-resolved', icon: 'bi-check-circle-fill', label: 'Resolved' },
-    REJECTED:    { cls: 'badge-status badge-rejected', icon: 'bi-x-circle',        label: 'Rejected' },
-  };
-  const s = map[status] || { cls: 'badge-status', icon: 'bi-circle', label: status };
-  return (
-    <span className={s.cls}>
-      <i className={`bi ${s.icon}`}></i> {s.label}
-    </span>
-  );
-};
-
+/**
+ * ComplaintHistory component — fetches the current student's complaints
+ * from `/api/complaints/my-complaints` and renders them in a table.
+ *
+ * @returns {JSX.Element} Complaint history card.
+ */
 const ComplaintHistory = () => {
+  /** Student's complaints sorted newest-first */
   const [complaints, setComplaints] = useState([]);
+  /** Whether the initial fetch is still in-flight */
   const [loading, setLoading] = useState(true);
+
   const navigate = useNavigate();
 
+  /* Fetch and sort on mount */
   useEffect(() => {
     const fetchMyComplaints = async () => {
       try {
         const response = await api.get('/complaints/my-complaints');
         const sorted = response.data.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
         );
         setComplaints(sorted);
       } catch (error) {
@@ -40,6 +43,7 @@ const ComplaintHistory = () => {
     fetchMyComplaints();
   }, []);
 
+  /* Loading state */
   if (loading) {
     return (
       <div className="card-modern" style={{ padding: '2.5rem', textAlign: 'center' }}>
@@ -55,6 +59,7 @@ const ComplaintHistory = () => {
 
   return (
     <div className="card-modern fade-in-up">
+      {/* Header with total count badge */}
       <div className="card-modern-header">
         <h5>
           <i className="bi bi-card-list" style={{ color: 'var(--clr-primary)' }}></i>
@@ -66,12 +71,13 @@ const ComplaintHistory = () => {
           padding: '0.2rem 0.65rem',
           borderRadius: 20,
           fontSize: '0.8rem',
-          fontWeight: 600
+          fontWeight: 600,
         }}>
           {complaints.length} total
         </span>
       </div>
 
+      {/* Empty state or complaint table */}
       {complaints.length === 0 ? (
         <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--clr-text-muted)' }}>
           <i className="bi bi-inbox" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.75rem' }}></i>
@@ -92,12 +98,8 @@ const ComplaintHistory = () => {
             <tbody>
               {complaints.map((c) => (
                 <tr key={c.complaintId} onClick={() => navigate(`/complaint/${c.complaintId}`)}>
-                  <td>
-                    <span className="complaint-id">{c.complaintId}</span>
-                  </td>
-                  <td>
-                    <strong style={{ color: 'var(--clr-text)' }}>{c.title}</strong>
-                  </td>
+                  <td><span className="complaint-id">{c.complaintId}</span></td>
+                  <td><strong style={{ color: 'var(--clr-text)' }}>{c.title}</strong></td>
                   <td style={{ color: 'var(--clr-text-2)' }}>
                     <i className="bi bi-geo-alt me-1" style={{ color: 'var(--clr-text-muted)' }}></i>
                     {c.location?.buildingName}

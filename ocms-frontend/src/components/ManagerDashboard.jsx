@@ -1,30 +1,34 @@
+/**
+ * @file ManagerDashboard.jsx
+ * @description Main dashboard for complaint managers.  Displays a hero
+ *              banner with quick stats and a filterable table of all
+ *              complaints assigned to the manager's building.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
+import { getStatusBadge } from '../utils/statusBadge';
 
-const getStatusBadge = (status) => {
-  const map = {
-    PENDING:     { cls: 'badge-status badge-pending',  icon: 'bi-hourglass-split', label: 'Pending' },
-    ACCEPTED:    { cls: 'badge-status badge-accepted', icon: 'bi-check-circle',    label: 'Accepted' },
-    IN_PROGRESS: { cls: 'badge-status badge-progress', icon: 'bi-gear',            label: 'In Progress' },
-    RESOLVED:    { cls: 'badge-status badge-resolved', icon: 'bi-check-circle-fill', label: 'Resolved' },
-    REJECTED:    { cls: 'badge-status badge-rejected', icon: 'bi-x-circle',        label: 'Rejected' },
-  };
-  const s = map[status] || { cls: 'badge-status', icon: 'bi-circle', label: status };
-  return (
-    <span className={s.cls}>
-      <i className={`bi ${s.icon}`}></i> {s.label}
-    </span>
-  );
-};
-
+/**
+ * ManagerDashboard component — shows the logged-in manager's assigned
+ * complaints with status filtering and per-row "Review" navigation.
+ *
+ * @returns {JSX.Element} Manager dashboard page.
+ */
 const ManagerDashboard = () => {
   const navigate = useNavigate();
+
+  /** Display name of the logged-in manager */
   const name = localStorage.getItem('name') || 'Manager';
+  /** All complaints for this manager's building */
   const [complaints, setComplaints] = useState([]);
+  /** Whether the initial fetch is still in-flight */
   const [loading, setLoading] = useState(true);
+  /** Currently active status filter (empty string = all) */
   const [statusFilter, setStatusFilter] = useState('');
 
+  /* Fetch building complaints on mount */
   useEffect(() => {
     const fetchComplaints = async () => {
       try {
@@ -39,19 +43,25 @@ const ManagerDashboard = () => {
     fetchComplaints();
   }, []);
 
+  /**
+   * Clears authentication state and redirects to the login page.
+   */
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
   };
 
+  /** Complaints filtered by the active status filter */
   const filtered = statusFilter
     ? complaints.filter((c) => c.status === statusFilter)
     : complaints;
 
+  /** Two-letter initials derived from the manager's name */
   const initials = name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <>
+      {/* Top navigation bar */}
       <div className="ocms-topbar">
         <div className="brand">
           <div className="brand-icon"><i className="bi bi-tools"></i></div>
@@ -69,7 +79,7 @@ const ManagerDashboard = () => {
       </div>
 
       <div className="page-wrap fade-in">
-        {/* Hero */}
+        {/* Hero banner with quick stats */}
         <div className="hero-banner">
           <h4><i className="bi bi-tools me-2"></i>Welcome, {name}</h4>
           <p>Review and manage all complaints assigned to your building.</p>
@@ -83,7 +93,7 @@ const ManagerDashboard = () => {
                   padding: '0.5rem 1rem',
                   fontSize: '0.85rem',
                   color: '#fff',
-                  backdropFilter: 'blur(4px)'
+                  backdropFilter: 'blur(4px)',
                 }}>
                   <strong>{count}</strong> {s.replace('_', ' ').toLowerCase()}
                 </div>
@@ -92,13 +102,14 @@ const ManagerDashboard = () => {
           </div>
         </div>
 
-        {/* Complaints Table */}
+        {/* Complaints table card */}
         <div className="card-modern">
           <div className="card-modern-header">
             <h5>
               <i className="bi bi-list-task" style={{ color: 'var(--clr-primary)' }}></i>
               Building Complaints
             </h5>
+            {/* Inline filter */}
             <div className="filter-bar" style={{ padding: 0, background: 'transparent', border: 'none' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--clr-text-2)', fontWeight: 600, whiteSpace: 'nowrap' }}>Filter:</label>
               <select
@@ -124,6 +135,7 @@ const ManagerDashboard = () => {
             </div>
           </div>
 
+          {/* Content: loading / empty / table */}
           {loading ? (
             <div style={{ padding: '3rem', textAlign: 'center' }}>
               <div className="spinner-border" role="status"><span className="visually-hidden">Loading…</span></div>
