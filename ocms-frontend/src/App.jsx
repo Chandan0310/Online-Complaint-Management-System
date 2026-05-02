@@ -15,7 +15,7 @@ import ComplaintDetail from './components/ComplaintDetail';
 import ManagerDashboard from './components/ManagerDashboard';
 import ManagerComplaintDetail from './components/ManagerComplaintDetail';
 import AdminDashboard from './components/AdminDashboard';
-import StudentProfile from './components/StudentProfile';
+import Profile from './components/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 
 /**
@@ -40,7 +40,7 @@ function App() {
           <ProtectedRoute element={<StudentDashboard />} allowedRoles={['STUDENT']} />
         } />
         <Route path="/profile" element={
-          <ProtectedRoute element={<StudentProfile />} allowedRoles={['STUDENT']} />
+          <ProtectedRoute element={<Profile />} allowedRoles={['STUDENT', 'MANAGER', 'ADMIN']} />
         } />
         {/* Complaint detail — accessible by the owning student and admins */}
         <Route path="/complaint/:id" element={

@@ -68,10 +68,10 @@ const ManagerDashboard = () => {
           <span>Manager Portal — OCMS</span>
         </div>
         <div className="nav-actions">
-          <div className="user-chip">
-            <div className="avatar">{initials}</div>
+          <button className="btn-outline-modern" onClick={() => navigate('/profile')}>
+            <i className="bi bi-person-circle"></i>
             {name}
-          </div>
+          </button>
           <button className="btn-danger-modern" onClick={handleLogout}>
             <i className="bi bi-box-arrow-right"></i> Logout
           </button>

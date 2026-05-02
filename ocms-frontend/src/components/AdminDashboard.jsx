@@ -46,10 +46,10 @@ const AdminDashboard = () => {
           <span>Admin Portal — OCMS</span>
         </div>
         <div className="nav-actions">
-          <div className="user-chip" style={{ background: '#f3e8ff', color: '#6b21a8' }}>
-            <div className="avatar" style={{ background: 'linear-gradient(135deg, #7c3aed, #db2777)' }}>{initials}</div>
+          <button className="btn-outline-modern" onClick={() => navigate('/profile')}>
+            <i className="bi bi-person-circle"></i>
             {name}
-          </div>
+          </button>
           <button className="btn-danger-modern" onClick={handleLogout}>
             <i className="bi bi-box-arrow-right"></i> Logout
           </button>

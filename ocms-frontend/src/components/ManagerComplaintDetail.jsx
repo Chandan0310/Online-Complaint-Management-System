@@ -57,6 +57,11 @@ const ManagerComplaintDetail = () => {
    * @param {string} newStatus - The new status to set (ACCEPTED | REJECTED | IN_PROGRESS | RESOLVED).
    */
   const handleUpdateStatus = async (newStatus) => {
+    /* Remarks are mandatory for rejections */
+    if (newStatus === 'REJECTED' && !remarks.trim()) {
+      alert('Please provide remarks before rejecting this complaint.');
+      return;
+    }
     if (!window.confirm(`Are you sure you want to mark this complaint as "${newStatus.replace('_', ' ')}"?`)) return;
 
     setActionLoading(true);
@@ -181,7 +186,7 @@ const ManagerComplaintDetail = () => {
                       This is a new complaint. Review the details and accept or reject it.
                     </p>
                     <div className="mb-3">
-                      <label>Remarks (optional, required if rejecting)</label>
+                      <label>Remarks <span style={{ color: 'var(--clr-rejected)', fontSize: '0.8rem' }}>(required when rejecting)</span></label>
                       <textarea
                         className="form-control"
                         rows="3"
@@ -203,7 +208,8 @@ const ManagerComplaintDetail = () => {
                         className="btn-danger-modern"
                         style={{ flex: 1, justifyContent: 'center', padding: '0.65rem' }}
                         onClick={() => handleUpdateStatus('REJECTED')}
-                        disabled={actionLoading}
+                        disabled={actionLoading || !remarks.trim()}
+                        title={!remarks.trim() ? 'Enter remarks to reject' : ''}
                       >
                         <i className="bi bi-x-circle me-1"></i> Reject
                       </button>
