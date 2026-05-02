@@ -75,29 +75,7 @@ const Login = () => {
 
   return (
     <div className="auth-wrapper">
-      {/* Left: Branding Panel */}
-      <div className="auth-brand-panel fade-in">
-        <div className="brand-logo">🎓</div>
-        <h1>University of<br />Hyderabad</h1>
-        <p>Online Complaint Management System — report and track campus infrastructure issues with ease.</p>
-
-        <div className="auth-brand-facts">
-          <div className="auth-brand-fact">
-            <div className="fact-icon"><i className="bi bi-shield-check"></i></div>
-            <span>Secure, role-based access for Students, Managers &amp; Admin</span>
-          </div>
-          <div className="auth-brand-fact">
-            <div className="fact-icon"><i className="bi bi-clock-history"></i></div>
-            <span>Real-time complaint tracking from submission to resolution</span>
-          </div>
-          <div className="auth-brand-fact">
-            <div className="fact-icon"><i className="bi bi-building"></i></div>
-            <span>Covering all university buildings and facilities</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Right: Login Form */}
+      {/* Login Form */}
       <div className="auth-form-panel">
         <div className="auth-form-box fade-in-up">
           <h2>Welcome back</h2>
